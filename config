@@ -117,8 +117,9 @@ declare -A color=(
 	[self]=39
 )
 
-declare -A height=(
+declare -A size=(
 	[input-pane]=2
+	[output-buffer]=512
 )
 
 

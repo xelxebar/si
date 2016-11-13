@@ -57,7 +57,7 @@ function ui_create_layout {
 	local -n layout=${1}
 
 	layout[output-pane]=$(\tmux display-message -p '#{pane_id}')
-	\tmux split-window -v -l ${height[input-pane]}
+	\tmux split-window -v -l ${size[input-pane]}
 	layout[input-pane]=$(\tmux display-message -p '#{pane_id}')
 }
 
@@ -90,7 +90,7 @@ function ui_init_output {
 	local regex_quit=$(regex_status_change "has quit")
 	local regex_chnick=$(regex_status_change "changed nick to")
 
-	local cmd='tail --follow --lines=+0 '"${out}"
+	local cmd="tail --follow --lines=${size[output-buffer]} ${out}"
 	cmd+="|"$(ui_line_stripper "${regex_join}")
 	cmd+="|"$(ui_line_stripper "${regex_part}")
 	cmd+="|"$(ui_line_stripper "${regex_quit}")
