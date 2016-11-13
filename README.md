@@ -3,7 +3,7 @@
 The suckless IRC client.
 
 This is a simple bash wrapper script around the ii IRC client from the suckless
-project ((suckless.org)[1]).
+project ([suckless.org][1]).
 
 The ii client exposes the IRC protocol to the linux filesystem, and si uses
 `tmux` to split a terminal into "input" and "output" areas. The output area is
