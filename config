@@ -1,0 +1,165 @@
+
+# MIT License
+# 
+# Copyright (c) 2016 Brandon Wilson
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+readonly -A path=(
+	["prefix"]="${HOME}/.si"
+	["confdir"]="${HOME}/.config/si"
+	["vimrc"]="${path[confdir]}/vimrc"
+)
+
+
+### connection settings
+
+readonly -A server=(
+	["freenode"]="irc.freenode.net"
+	["oftc"]="irc.oftc.net"
+	["tc"]="irc.tehconnection.eu"
+	["btn"]="irc.broadcasthe.net"
+	["ptp"]="irc.passthepopcorn.me"
+	["what"]="irc.what-network.net"
+	["bitlbee"]="localhost"
+)
+
+readonly -A nick=(
+	["freenode"]="xelxebar"
+	["oftc"]="xelxebar"
+	["tc"]="xelxebar"
+	["btn"]="xelxebar"
+	["ptp"]="xelxebar"
+	["what"]="xelxebar"
+	["bitlbee"]="xelxebar"
+)
+
+readonly -A connecthook=(
+	["tc"]="tehconnection"
+	["ptp"]="passthepopcorn"
+	["what"]="whatcd"
+)
+
+readonly -A channels=(
+	["freenode"]="
+		#2f30 
+		#Mechboards 
+		#android-dev 
+		#android-root 
+		#archlinux 
+		#!/bin/mksh 
+		#btrfs 
+		##categorytheory 
+		#cat-v 
+		#clojure 
+		#clojure-android 
+		#coreboot 
+		#generalrelativity 
+		#git 
+		#gnu 
+		#hakyll 
+		#hamradio
+		#haskell 
+		#haskell-stack 
+		#hledger 
+		#input.club
+		##kernel 
+		#lede-dev 
+		#leiningen 
+		#lesswrong 
+		#librecmc 
+		##math 
+		#neovim 
+		#nixos 
+		#opencv 
+		#openshells 
+		#openwrt 
+		#plan9 
+		#systemd 
+		##topology 
+		#vim 
+		#weechat 
+		#xmonad"
+	["oftc"]="
+		#grsecurity
+		#ii 
+		#suckless"
+	["tc"]="#tehconnection"
+)
+
+declare -A timeout=(
+	[nick-registration]=30
+)
+
+
+### ui settings
+
+declare -A color=(
+	[date]=234
+	[nick]=173
+	[self]=39
+)
+
+declare -A height=(
+	[input-pane]=2
+)
+
+
+### network connect hooks
+
+function postmsg {
+	local network=${1}
+	local recipient=${2}
+	local msg=${3}
+
+	echo "${msg}" > "${prefix}/${servers[${network}]}/${recipient}/in"
+}
+
+function tehconnection {
+	local network="tc"
+	local username="xelxebar"
+	local irckey=$(\pass eu/tehconnection/xelxebar/irc-key)
+	local bot="Zooey"
+	local msg="auth ${username} ${irckey}"
+
+	postmsg "${network}" "${bot}" "${msg}"
+}
+
+function passthepopcorn {
+	local network="ptp"
+	local username="xelxebar"
+	local irckey=$(\pass me/passthepopcorn/irc/xelxebar/irc-key)
+	local bot="Hummingbird"
+	local channel="#PassThePopcorn"
+	local msg="ENTER ${username} ${irckey} ${channel}"
+
+	postmsg "${network}" "${bot}" "${msg}"
+}
+
+function whatcd {
+	local netwok="what"
+	local username="xelxebar"
+	local irckey=$(\pass cd/what/irc/xelxebar/irc-key)
+	local bot="Drone"
+	local channel="#what.cd"
+	local msg="ENTER ${channel} ${username} ${irckey}"
+
+	postmsg "${network}" "${bot}" "${msg}"
+}
