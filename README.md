@@ -26,4 +26,4 @@ which to install the si configuration file. Note that SI_CONFIG defaults to
 $HOME/.config/si/config.
 
 
-[1]:https://suckless.org/
+[1]:http://suckless.org/
