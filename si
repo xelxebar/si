@@ -177,9 +177,9 @@ function io_pidfile {
 function io_isidentreq {
 	local msg=${1}
 
-	local regex='This nickname is registered. Please choose a different '\
-	            'nickname, or identify via /msg NickServ identify '\
-	            '<password>'
+	local regex='This nickname is registered. Please choose a different '
+	regex+='nickname, or identify via /msg NickServ identify '
+	regex+='<password>.'
 
 	return $(echo "${msg}" | \egrep --quiet "${regex}")
 }
