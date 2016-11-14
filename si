@@ -117,11 +117,12 @@ function ui_init_input {
 }
 
 function ui_set_title {
-	local network=${1}
-	local target=${2}
+	local window=${1}
+	local network=${2}
+	local target=${3}
 
 	\tmux rename-window "si:${target:-${network}}"
-	\tmux set-window-option allow-rename off
+	\tmux set-window-option -t "${window}" automatic-rename off
 }
 
 function ui_init {
@@ -137,7 +138,7 @@ function ui_init {
 		[input-pane]=""
 	)
 
-	ui_set_title "${network}" "${target}"
+	ui_set_title "${tmux_window}" "${network}" "${target}"
 	ui_create_layout tmux_layout
 	ui_init_input "${basedir}" "${tmux_layout[input-pane]}"
 	ui_init_output "${basedir}" "${handle}" ${tmux_layout[output-pane]}
