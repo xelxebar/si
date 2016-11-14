@@ -31,4 +31,3 @@ set undodir=$HOME/.vim/undo
 syntax on
 
 inoremap <cr> <esc>:execute 'write!' fnameescape(g:si_infile)<cr>cc
-nnoremap q    q!
