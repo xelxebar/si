@@ -25,6 +25,12 @@
 bin = si
 conf = config vimrc
 
-install: $(bin) $(conf)
+
+.PHONY: install install-bin install-conf
+install: install-bin install-conf
+
+install-bin: $(bin)
 	install --mode=755 $(bin) $(PREFIX)/bin/
+
+install-conf: $(conf)
 	install --mode=644 --target-directory=$(HOME)/.config/si/ -D $(conf)
