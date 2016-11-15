@@ -142,7 +142,7 @@ function ui_init {
 	local basedir=${1}
 	local network=${2}
 	local target=${3}
-	local handle=${4}
+	local nick=${4}
 
 	local tmux_session=$(\tmux display-message -p '#{session_id}')
 	local tmux_window=$(\tmux display-message -p '#{window_id}')
@@ -154,7 +154,7 @@ function ui_init {
 	ui_set_title "${tmux_window}" "${network}" "${target}"
 	ui_create_layout tmux_layout
 	ui_init_input "${basedir}" "${tmux_layout[input-pane]}"
-	ui_init_output "${basedir}" "${handle}" ${tmux_layout[output-pane]}
+	ui_init_output "${basedir}" "${nick}" ${tmux_layout[output-pane]}
 }
 
 
@@ -164,11 +164,11 @@ function ui_view {
 	local target=${2}
 
 	local basedir=${path[prefix]}/${uri}/${target}
-	local handle=${nick[${network}]}
+	local nick=${nick[${network}]}
 
 	if  ! [[ "${basedir}" -ef "${path[prefix]}" ]] \
 	   && [[ -d "${basedir}" ]]; then
-		ui_init "${basedir}" "${network}" "${target}" "${handle}"
+		ui_init "${basedir}" "${network}" "${target}" "${nick}"
 	fi
 }
 
@@ -208,39 +208,21 @@ function io_isnewmsg {
 	return $([[ ${msgdate} -gt ${cmpdate} ]])
 }
 
-function io_cn2rpath {
-	local name=${1}
-
-	local -a dirs=(${name//./ })
-	local rpath=""
-
-	local i=${#dirs[@]}
-	for i in $(seq $(($i-1)) -1 0); do
-		rpath+=${dirs[$i]}/
-	done
-
-	echo ${rpath#/}
-}
-
 function io_sendidentreq {
 	local reqdate=${1}
 	local network=${2}
-	local handle=${3}
+	local nick=${3}
 
 	local basedir=$(io_basedir "${network}")
 	local nickserv=${basedir}/nickserv/
 	local out=${basedir}/nickserv/out
 	local in=${basedir}/nickserv/in
-	local uri=${server[${network}]}
 	local msg=$(tail --lines=1 "${out}")
 
 	if    $(io_isnewmsg "${reqdate}" "${msg}") \
 	   && $(io_isidentreq "${msg}"); then
-		local passid=$(io_cn2rpath "${uri}")/${handle}
-		local pass=$(\pass "${passid}")
-		local ident="identify ${pass}"
-		
-		return $(echo "${ident}" > "${in}")
+		local pass=$(${password[${network}]})
+		return $(echo "identify ${pass}" > "${in}")
 	else
 		return 1
 	fi
@@ -249,7 +231,7 @@ function io_sendidentreq {
 function io_identifynick {
 	local network=${1}
 
-	local handle=${nick[${network}]}
+	local nick=${nick[${network}]}
 	local reqdate=$(date +%s)
 	local basedir=$(io_basedir "${network}")
 	local nickserv=${basedir}/nickserv/
@@ -260,7 +242,7 @@ function io_identifynick {
 	                  --event modify                             \
 	                  --outfile "${nickserv}/inotifywait.log"    \
 	                  "${out}"); then
-		io_sendidentreq "${reqdate}" "${network}" "${handle}" || \
+		io_sendidentreq "${reqdate}" "${network}" || \
 			${FUNCNAME} "${network}"
 	elif !  [[ -d "${nickserv}" ]] \
 	     && $(\inotifywait --timeout ${timeout[nick-registration]} \
@@ -269,7 +251,7 @@ function io_identifynick {
 	                       "${basedir}"); then
 		${FUNCNAME} "${network}"
 	else
-		>&2 echo "!! Failed to identify ${handle} with ${network}"
+		>&2 echo "!! Failed to identify ${nick} with ${network}"
 	fi
 }
 
@@ -277,12 +259,12 @@ function io_startconn {
 	local network=${1}
 
 	local uri=${server[${network}]}
-	local handle=${nick[${network}]}
+	local nick=${nick[${network}]}
 	local pass=${passwords[${network}]}
 	local pidfile=$(io_pidfile ${network})
 
 	export IIPASS=${pass}
-	\ii -i "${path[prefix]}" -s "${uri}" -n "${handle}" -k IIPASS &
+	\ii -i "${path[prefix]}" -s "${uri}" -n "${nick}" -k IIPASS &
 	echo "$!" > "${pidfile}"
 }
 
