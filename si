@@ -58,6 +58,32 @@ function ui_line_stripper {
 	echo "\egrep --invert-match --line-buffered '${regex}'"
 }
 
+function ui_ignores_cmd {
+	local key=""
+	local cmd=""
+
+	for key in "${ignores[@]}"; do
+		local regex=$(eval echo "\"${key}\"")
+		cmd+="|"$(ui_line_stripper "${regex}")
+	done
+
+	echo ${cmd#|}
+}
+
+function ui_colorize_cmd {
+	local i=0
+	local cmd=""
+
+	for i in $(seq 0 2 $((${#color[@]}-1))); do
+		local key=${color[$i]}
+		local regex=$(eval echo "\"${key}\"")
+		local cnum=${color[$(($i+1))]}
+		cmd+="|"$(ui_colorizer "${regex}" "${cnum}")
+	done
+
+	echo ${cmd#|}
+}
+
 function ui_init_output {
 	local basedir=${1}
 	local self=${2}
@@ -65,19 +91,8 @@ function ui_init_output {
 
 	local out=${basedir}/out
 	local cmd="tail --follow --lines=${size[output-buffer]} ${out}"
-	local key=""
-	for key in "${ignores[@]}"; do
-		local regex=$(eval echo "\"${key}\"")
-		cmd+="|"$(ui_line_stripper "${regex}")
-	done
-
-	local i=0
-	for i in $(seq 0 2 $((${#color[@]}-1))); do
-		local key=${color[$i]}
-		local regex=$(eval echo "\"${key}\"")
-		local cnum=${color[$(($i+1))]}
-		cmd+="|"$(ui_colorizer "${regex}" "${cnum}")
-	done
+	cmd+="|"$(ui_ignores_cmd)
+	cmd+="|"$(ui_colorize_cmd)
 
 	\tmux respawn-pane -k -t ${tmux_pane} "${cmd}"
 }
@@ -305,4 +320,5 @@ function main {
 
 main "${@}"
 
-#vim: set foldmethod=marker :
+
+# vim: set foldmethod=marker :
