@@ -41,7 +41,8 @@ declare regex_ip4addr="([[:digit:]]{1,3}(\.[[:digit:]]{1,3}){3})"
 declare regex_ip6addr="(([[:xdigit:]]{1,4}|:)(:[[:xdigit:]]{1,4}|:){1,7})"
 
 declare regex_shortname="([[:alnum:]._-]*)"
-declare regex_hostname="(${regex_shortname}(\.${regex_shortname})*(/${regex_shortname})*)"
+declare regex_hostname="(${regex_shortname}(\.${regex_shortname})*"
+        regex_hostname+="(/${regex_shortname})*)"
 declare regex_hostaddr="(${regex_ipv4addr}|${regex_ip6addr})"
 declare regex_host="(${regex_hostname}|${regex_hostaddr})"
 
@@ -165,7 +166,7 @@ function ui_view {
 	local basedir=${path[prefix]}/${uri}/${target}
 	local handle=${nick[${network}]}
 
-	if    [[ $(\realpath "${basedir}") != $(\realpath "${path[prefix]}") ]] \
+	if  ! [[ "${basedir}" -ef "${path[prefix]}" ]] \
 	   && [[ -d "${basedir}" ]]; then
 		ui_init "${basedir}" "${network}" "${target}" "${handle}"
 	fi
@@ -260,7 +261,7 @@ function io_identifynick {
 	                  --outfile "${nickserv}/inotifywait.log"    \
 	                  "${out}"); then
 		io_sendidentreq "${reqdate}" "${network}" "${handle}" || \
-				${FUNCNAME} "${network}"
+			${FUNCNAME} "${network}"
 	elif !  [[ -d "${nickserv}" ]] \
 	     && $(\inotifywait --timeout ${timeout[nick-registration]} \
 	                       --event create                          \
