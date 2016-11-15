@@ -122,6 +122,10 @@ declare -A size=(
 	[output-buffer]=512
 )
 
+declare -A format=(
+	[window-name-prefix]="si:"
+	[window-name-separator]=","
+)
 
 ### network connect hooks
 

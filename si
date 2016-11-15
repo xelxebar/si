@@ -120,8 +120,16 @@ function ui_set_title {
 	local window=${1}
 	local network=${2}
 	local target=${3}
+	local prefix=${format[window-name-prefix]}
+	local sep=${format[window-name-separator]}
+	local cur=$(tmux display-message -p '#{window_name}')
+	local new=${target:-${network}}
+	local name=""
 
-	\tmux rename-window "si:${target:-${network}}"
+	[[ "${cur##${prefix}}" = "${cur}" ]] && name=${prefix}${new} \
+	                                     || name=${cur}${sep}${new}
+
+	\tmux rename-window "${name}"
 	\tmux set-window-option -t "${window}" automatic-rename off
 }
 
