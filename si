@@ -64,10 +64,10 @@ function ui_ignores_cmd {
 
 	for key in "${ignores[@]}"; do
 		local regex=$(eval echo "\"${key}\"")
-		cmd+="|"$(ui_line_stripper "${regex}")
+		cmd+=" | "$(ui_line_stripper "${regex}")
 	done
 
-	echo ${cmd#|}
+	echo ${cmd# | }
 }
 
 function ui_colorize_cmd {
@@ -78,10 +78,10 @@ function ui_colorize_cmd {
 		local key=${color[$i]}
 		local regex=$(eval echo "\"${key}\"")
 		local cnum=${color[$(($i+1))]}
-		cmd+="|"$(ui_colorizer "${regex}" "${cnum}")
+		cmd+=" | "$(ui_colorizer "${regex}" "${cnum}")
 	done
 
-	echo ${cmd#|}
+	echo ${cmd# | }
 }
 
 function ui_init_output {
@@ -91,8 +91,8 @@ function ui_init_output {
 
 	local out=${basedir}/out
 	local cmd="tail --follow --lines=${size[output-buffer]} ${out}"
-	cmd+="|"$(ui_ignores_cmd)
-	cmd+="|"$(ui_colorize_cmd)
+	cmd+=" | "$(ui_ignores_cmd)
+	cmd+=" | "$(ui_colorize_cmd)
 
 	\tmux respawn-pane -k -t ${tmux_pane} "${cmd}"
 }
@@ -150,8 +150,8 @@ function ui_init {
 
 function ui_view {
 	local network=${1}
-	local uri=${server[${network}]}
 	local target=${2}
+	local uri=${server[${network}]}
 
 	local basedir=${path[prefix]}/${uri}/${target}
 	local nick=${nick[${network}]}
@@ -162,6 +162,64 @@ function ui_view {
 	fi
 }
 
+function ui_set_trigger {
+	local callback=${1}
+	local trigger=${2}
+	local network=${3}
+	local target=${4}
+
+	local uri=${server[${network}]}
+	local nick=${nick[${network}]}
+	local file=${path[prefix]}/${uri}/${target}/out
+
+	local regex=$(eval echo "\"${trigger}\"")
+	local cmd="tail --lines=1 '${file}'"
+	cmd+=" | "$(ui_ignores_cmd)
+
+	while \inotifywait --event modify       \
+	                   --outfile /dev/null  \
+			   --syslog             \
+			   "${file}"; do
+		local msg=$(eval "${cmd}")
+		local match=$(echo "${msg}" | \egrep --only-matching "${regex}")
+
+		[[ -n "${match}" ]] && ${callback} "${network}" \
+		                                   "${target}"  \
+		                                   "${msg}"     \
+		                                   "${match}"
+	done
+}
+
+# TODO: Fix erroneous pathname expansion
+function ui_watch {
+	local network=${1}
+	local target=${2}
+	local uri=${server[${network}]}
+	local pidfile=${path[prefix]}/${uri}/${target}/watch.pid
+
+	local i=0
+	for i in $(seq 0 2 $((${#triggers[@]}-1))); do
+		local trigger=${triggers[$i]}
+		local callback=${triggers[$(($i+1))]}
+		ui_set_trigger "${callback}" "${trigger}" \
+		               "${network}" "${target}" &
+		echo "$!" >> "${pidfile}"
+	done
+}
+
+function ui_unwatch {
+	local network=${1}
+	local target=${2}
+	local uri=${server[${network}]}
+	local pidfile=${path[prefix]}/${uri}/${target}/watch.pid
+
+	local pid=""
+	while IFS= read -r pid; do
+		kill "${pid}" $(pgrep --parent "${pid}")
+	done < "${pidfile}"
+
+	rm "${pidfile}"
+}
 
 ### connect {{{1
 
@@ -295,11 +353,15 @@ function cli_help {
 	Usage: $(basename "${0}") <command> [args]
 	
 	Commands:
-	    connect <network>          connect to network
+	    connect <network>            connect to network
 
-	    disconnect <network>       disconnect from network
+	    disconnect <network>         disconnect from network
 
-	    view <network> [target]    view i/o for target channel/pm
+	    view <network> [target]      view i/o for target channel/pm
+
+	    watch <network> [target]     watch triggers on target
+
+	    unwatch <network> [target]   remove watch triggers on target
 EOF
 }
 
@@ -314,6 +376,8 @@ function main {
 		connect)    io_connect "${args[@]}";;
 		disconnect) io_disconnect "${args[@]}";;
 		view)       ui_view "${args[@]}";;
+		watch)      ui_watch "${args[@]}";;
+		unwatch)    ui_unwatch "${args[@]}";;
 		*)          cli_help;;
 	esac
 }
