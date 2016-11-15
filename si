@@ -22,8 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-SI_CONFIG=${SI_CONFIG:-${HOME}/.config/si/config}
-. "${SI_CONFIG}"
+SI_HOME=${SI_HOME:-$(dirname $(which $0))/../share/si}
+. "${SI_HOME}/default.config"
+
+SI_CONFIG=${SI_CONFIG:-${path[config]}}
+[[ -f "${SI_CONFIG}" ]] && . "${SI_CONFIG}"
+
 
 
 ### regex {{{1
