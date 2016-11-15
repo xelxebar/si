@@ -195,7 +195,7 @@ function ui_watch {
 	local network=${1}
 	local target=${2}
 	local uri=${server[${network}]}
-	local pidfile=${path[prefix]}/${uri}/${target}/watch.pid
+	local pidfile=${path[prefix]}/${uri}/${target}/${filename[watch-pids]}
 
 	local i=0
 	for i in $(seq 0 2 $((${#triggers[@]}-1))); do
@@ -211,7 +211,7 @@ function ui_unwatch {
 	local network=${1}
 	local target=${2}
 	local uri=${server[${network}]}
-	local pidfile=${path[prefix]}/${uri}/${target}/watch.pid
+	local pidfile=${path[prefix]}/${uri}/${target}/${filename[watch-pids]}
 
 	local pid=""
 	while IFS= read -r pid; do
@@ -232,7 +232,7 @@ function io_basedir {
 function io_pidfile {
 	local network=${1}
 
-	echo $(io_basedir "${network}")/pid
+	echo $(io_basedir "${network}")/"${filename[connection-pid]}"
 }
 
 function io_isidentreq {
@@ -285,18 +285,20 @@ function io_identifynick {
 	local nickserv=${basedir}/nickserv/
 	local out=${basedir}/nickserv/out
 
-	if    [[ -d "${nickserv}" ]]                                 \
-	   && $(\inotifywait --timeout ${timeout[nick-registration]} \
-	                  --event modify                             \
-	                  --outfile "${nickserv}/inotifywait.log"    \
-	                  "${out}"); then
+	if    [[ -d "${nickserv}" ]]                               \
+	   && \inotifywait --event modify                          \
+	                   --outfile /dev/null                     \
+			   --syslog                                \
+	                   --timeout ${timeout[nick-registration]} \
+	                   "${out}"; then
 		io_sendidentreq "${reqdate}" "${network}" || \
 			${FUNCNAME} "${network}"
-	elif !  [[ -d "${nickserv}" ]] \
-	     && $(\inotifywait --timeout ${timeout[nick-registration]} \
-	                       --event create                          \
-	                       --outfile "${basedir}/inotifywait.log"  \
-	                       "${basedir}"); then
+	elif !  [[ -d "${nickserv}" ]]                               \
+	     && \inotifywait --event modify                          \
+	                     --outfile /dev/null                     \
+	          	     --syslog                                \
+	                     --timeout ${timeout[nick-registration]} \
+	                       "${basedir}"; then
 		${FUNCNAME} "${network}"
 	else
 		>&2 echo "!! Failed to identify ${nick} with ${network}"
