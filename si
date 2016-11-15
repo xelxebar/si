@@ -65,10 +65,11 @@ function ui_init_output {
 
 	local out=${basedir}/out
 	local cmd="tail --follow --lines=${size[output-buffer]} ${out}"
-	cmd+="|"$(ui_line_stripper "${regex_join}")
-	cmd+="|"$(ui_line_stripper "${regex_part}")
-	cmd+="|"$(ui_line_stripper "${regex_quit}")
-	cmd+="|"$(ui_line_stripper "${regex_chnick}")
+	local key=""
+	for key in "${ignores[@]}"; do
+		local regex=$(eval echo "\"${key}\"")
+		cmd+="|"$(ui_line_stripper "${regex}")
+	done
 
 	local i=0
 	for i in $(seq 0 2 $((${#color[@]}-1))); do
