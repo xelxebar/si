@@ -364,7 +364,7 @@ function cli_help {
 	    watch <network> [target]     watch triggers on target
 
 	    unwatch <network> [target]   remove watch triggers on target
-EOF
+	EOF
 }
 
 ### }}}
