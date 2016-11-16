@@ -350,6 +350,32 @@ function io_disconnect {
 
 ### cli {{{1
 
+function cli_conn_open {
+	local pid=${1}
+	return $([[ $(ps --format ucmd --no-headers "${pid}") = "ii" ]])
+}
+
+function cli_conns {
+	local pidfile=""
+
+	\find "${path[prefix]}" -name "${filename[connection-pid]}" | \
+	while IFS= read -r pidfile; do
+		local pid=$(cat "${pidfile}")
+		local uri=$(\dirname "${pidfile}" | \xargs basename)
+
+		if $(cli_conn_open "${pid}"); then
+			echo "${uri}"
+		fi
+	done
+}
+
+function cli_status {
+	local uri=""
+	cli_conns | while IFS= read -r uri; do
+		echo -e "${uri}: open"
+	done
+}
+
 function cli_help {
 	cat <<- EOF
 	Usage: $(basename "${0}") <command> [args]
@@ -364,6 +390,8 @@ function cli_help {
 	    watch <network> [target]     watch triggers on target
 
 	    unwatch <network> [target]   remove watch triggers on target
+
+	    status                       show connection status
 	EOF
 }
 
@@ -380,6 +408,7 @@ function main {
 		view)       ui_view "${args[@]}";;
 		watch)      ui_watch "${args[@]}";;
 		unwatch)    ui_unwatch "${args[@]}";;
+		status)     cli_status "${args[@]}";;
 		*)          cli_help;;
 	esac
 }
